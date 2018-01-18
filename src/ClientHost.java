@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.net.*;
 
 public class ClientHost {
@@ -10,7 +11,7 @@ public class ClientHost {
     private static final byte INVALID[] = new byte[] { (byte)0x01, (byte)0x01 };
     private static final String FILENAME = "TESTFILEPLEASEIGNORE.txt";
 
-    public ClientHost(){
+    private ClientHost(){
         try {
             sendReceiveSocket = new DatagramSocket();
         } catch (SocketException se) {
@@ -19,21 +20,41 @@ public class ClientHost {
         }
     }
 
-    public void sendAndReceive(){
+    private void sendAndReceive(){
         byte filename[] = FILENAME.getBytes();
 
         try {
-            sendPacket = new DatagramPacket(filename, filename.length, InetAddress.getLocalHost(), 5000);
+            sendPacket = new DatagramPacket(filename, filename.length, InetAddress.getLocalHost(), 23);
         }catch (UnknownHostException se){
             se.printStackTrace();
             System.exit(1);
         }
+
+        try{
+            sendReceiveSocket.send(sendPacket);
+        } catch (IOException e){
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        byte data[] = new byte[100];
+        receivePacket = new DatagramPacket(data, data.length);
+
+        try {
+            sendReceiveSocket.receive(receivePacket);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        sendReceiveSocket.close();
 
 
     }
 
 
     public static void main(String[] args) {
-
+        ClientHost c = new ClientHost();
+        c.sendAndReceive();
     }
 }
