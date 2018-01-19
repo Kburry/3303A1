@@ -1,14 +1,16 @@
+package hosts;
+
 import java.io.IOException;
 import java.net.*;
 
-public class IntermediateHost {
+public class IntermediateHost extends Host {
 
-    private DatagramPacket sendPacket, receivePacket, receiveServerPacket;
     private DatagramSocket port23Socket, sendReceiveSocket;
 
     private IntermediateHost() {
         try {
             sendReceiveSocket = new DatagramSocket();
+            sendReceiveSocket.setSoTimeout(10000);
             port23Socket = new DatagramSocket(23);
         } catch (SocketException se){
             se.printStackTrace();
@@ -16,10 +18,14 @@ public class IntermediateHost {
         }
     }
 
+    private  void loop(){
+        while (true) receiveSendPacket();
+    }
+
     private void receiveSendPacket(){
 
-        byte data[] = new byte[100];
-        receivePacket = new DatagramPacket(data, data.length);
+        byte buffer[] = new byte[100];
+        DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 
         try {
             port23Socket.receive(receivePacket);
@@ -28,23 +34,25 @@ public class IntermediateHost {
             System.exit(1);
         }
 
-        data = receivePacket.getData();
-        try {
-            sendPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(), 69);
-        } catch(UnknownHostException uhe){
-            uhe.printStackTrace();
-            System.exit(1);
-        }
+        byte data[] = copyByteData(receivePacket);
+        System.out.println("Data Received from Client:");
+        display(data);
+
+        DatagramPacket sendPacket;
+
+        System.out.println("Data Sent to Server:");
+        display(data);
 
         try {
+            sendPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(), 69);
             sendReceiveSocket.send(sendPacket);
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
         }
 
-        data = new byte[100];
-        receiveServerPacket = new DatagramPacket(data, data.length);
+        buffer = new byte[100];
+        DatagramPacket receiveServerPacket = new DatagramPacket(buffer, buffer.length);
 
         try{
             sendReceiveSocket.receive(receiveServerPacket);
@@ -53,22 +61,25 @@ public class IntermediateHost {
             System.exit(1);
         }
 
-        data = receiveServerPacket.getData();
+        data = copyByteData(receiveServerPacket);
+        System.out.println("Data Received from Server:");
+        display(data);
+
         sendPacket = new DatagramPacket(data, data.length, receivePacket.getAddress(), receivePacket.getPort());
+
+        System.out.println("Data Sent to Client:");
+        display(data);
+
         try{
             sendReceiveSocket.send(sendPacket);
         } catch (IOException e){
             e.printStackTrace();
             System.exit(1);
         }
-
-        port23Socket.close();
-        sendReceiveSocket.close();
-
     }
 
     public static void main(String[] args) {
         IntermediateHost i = new IntermediateHost();
-        i.receiveSendPacket();
+        i.loop();
     }
 }
