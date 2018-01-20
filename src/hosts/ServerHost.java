@@ -24,6 +24,9 @@ public class ServerHost extends Host {
         }
     }
 
+    /**
+     * Loop forever until it receives invalid then it will exit.
+     */
     private void loop(){
         while (true) {
             try {
@@ -35,10 +38,15 @@ public class ServerHost extends Host {
         }
     }
 
+    /**
+     * Receive Packet and craft a response to that packet.
+     * @throws DataFormatException - If packet is in a invalid format it will throw Data Format Exception
+     */
     private void receiveSendPacket() throws DataFormatException {
-        byte buffer[] = new byte[100];
+        byte buffer[] = new byte[BUFFER_SIZE];
         DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 
+        //Receive Packet
         try {
             port69Socket.receive(receivePacket);
         } catch (IOException e) {
@@ -50,6 +58,7 @@ public class ServerHost extends Host {
         System.out.println("Received from Intermediate Host:");
         display(data);
 
+        //Parse the packet data, may throw DataFormatException
         data = parsePacket(data);
 
         DatagramPacket sendPacket = new DatagramPacket(data, data.length, receivePacket.getAddress(), receivePacket.getPort());
@@ -57,6 +66,7 @@ public class ServerHost extends Host {
         System.out.println("Sending to Intermediate Host:");
         display(data);
 
+        //Send Response Packet
         DatagramSocket sendSocket;
         try {
             sendSocket = new DatagramSocket();

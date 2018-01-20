@@ -10,6 +10,7 @@ public class IntermediateHost extends Host {
     private IntermediateHost() {
         try {
             sendReceiveSocket = new DatagramSocket();
+            //Timeout is purely so that IntermediateHost will stop when ServerHost Crashes (convenience)
             sendReceiveSocket.setSoTimeout(10000);
             port23Socket = new DatagramSocket(23);
         } catch (SocketException se){
@@ -18,15 +19,22 @@ public class IntermediateHost extends Host {
         }
     }
 
+    /**
+     * loop forever
+     */
     private  void loop(){
         while (true) receiveSendPacket();
     }
 
+    /**
+     * Receive Data from one host and forward to another. Then return response to original host.
+     */
     private void receiveSendPacket(){
 
-        byte buffer[] = new byte[100];
+        byte buffer[] = new byte[BUFFER_SIZE];
         DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 
+        //Receive Original Data
         try {
             port23Socket.receive(receivePacket);
         } catch (IOException e) {
@@ -43,6 +51,7 @@ public class IntermediateHost extends Host {
         System.out.println("Data Sent to Server:");
         display(data);
 
+        // Forward Original Data
         try {
             sendPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(), 69);
             sendReceiveSocket.send(sendPacket);
@@ -51,9 +60,10 @@ public class IntermediateHost extends Host {
             System.exit(1);
         }
 
-        buffer = new byte[100];
+        buffer = new byte[BUFFER_SIZE];
         DatagramPacket receiveServerPacket = new DatagramPacket(buffer, buffer.length);
 
+        //Grab Response from Second Host
         try{
             sendReceiveSocket.receive(receiveServerPacket);
         } catch (IOException e) {
@@ -70,6 +80,7 @@ public class IntermediateHost extends Host {
         System.out.println("Data Sent to Client:");
         display(data);
 
+        //Send Response to Original Host
         try{
             sendReceiveSocket.send(sendPacket);
         } catch (IOException e){

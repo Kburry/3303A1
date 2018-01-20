@@ -14,6 +14,7 @@ public class ClientHost extends Host {
     private ClientHost(){
         try {
             sendReceiveSocket = new DatagramSocket();
+            //Timeout is purely so that ClientHost will stop when ServerHost Crashes (convenience) catch can be changed from Exit to Return for constant running
             sendReceiveSocket.setSoTimeout(10000);
         } catch (SocketException se) {
             se.printStackTrace();
@@ -45,12 +46,20 @@ public class ClientHost extends Host {
             sendAndReceive(i % 2 == 0 ? Host.READ : Host.WRITE);
         }
         sendAndReceive(INVALID);
+        sendReceiveSocket.close();
     }
 
+    /**
+     * send a Packet and Get a Response.
+     * @param format - HEADER For the Data
+     * */
     private void sendAndReceive(byte[] format){
+        //Create Data
         byte packetData[] = createByteData(format);
+        System.out.println("Data Sent:");
         display(packetData);
 
+        //Send Packet
         try {
             DatagramPacket sendPacket = new DatagramPacket(packetData, packetData.length, InetAddress.getLocalHost(), 23);
             sendReceiveSocket.send(sendPacket);
@@ -59,9 +68,11 @@ public class ClientHost extends Host {
             System.exit(1);
         }
 
-        byte buffer[] = new byte[100];
+        //Create Buffer
+        byte buffer[] = new byte[BUFFER_SIZE];
         DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 
+        //Receive Data, With Timeout will crash after 10 seconds (for convenience)
         try {
             sendReceiveSocket.receive(receivePacket);
         } catch (IOException e) {
@@ -70,6 +81,7 @@ public class ClientHost extends Host {
         }
 
         byte data[] = copyByteData(receivePacket);
+        System.out.println("Data Received:");
         display(data);
     }
 
